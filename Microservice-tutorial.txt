@@ -1,0 +1,145 @@
+
+
+Microservice Tutorial
+
+	1. create product service
+		- dependency (web,lombok,mysql driver,jpa,openAPI swagger)
+		- port 8081
+		- added mysql dependency in application.yml file
+		- created crud api
+		
+	2. create order service
+		-dependency(web,lombok,mysql driver,jpa,openAPI swagger)
+		- port 8082
+		- added mysql dependency in application.yml file
+		- created crud api
+	
+	3. create EurekaServer project
+		-dependency(eureka server)
+		- added @EnableEurekaServer in rootApplication.java file (where @SpringBootApplication annotation is added)
+		- added some configuration in annotation.properties file
+				
+				server.port = 8761
+				eureka.client.register-with-eureka=false // not to register the eureka server with itself
+				eureka.client.fetch-registry=false // not to have the local copy of registry
+				
+				
+	4. now make product and order service as eureka client
+	
+	
+		- add dependency and dependency management
+		
+		
+		---- inside dependencies tag ---
+		<dependency>
+		  <groupId>org.springframework.cloud</groupId>
+		  <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+		</dependency>
+		
+		--- outside dependencies tag ----
+			<dependencyManagement>
+			<dependencies>
+			  <dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-dependencies</artifactId>
+				<version>${spring-cloud.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			  </dependency>
+			</dependencies>
+		  </dependencyManagement>
+		  
+		  ---- inside project tag ---
+		  
+		  <spring-cloud.version>2021.0.7</spring-cloud.version>
+		  
+		  
+		  - add @EnableEurekaClient (where @SpringBootApplication annotation is added)
+		  - add some configuration in application.properties file
+			
+				server.port=0 # as we want to create multiple instance of the service so we need to make the port dynamic , this will handle by spring at the start time
+				eureka.instance.instance-id=${spring.application.name}:${random.uuid}
+		
+		5. Configure Centralized configuration pattern
+		
+		-----------  Set up Config server  --------------
+		
+			here we store our application common configuration in a git repository
+			
+			create a spring boot project with the following dependencies
+					- config server
+					- spring boot actuator
+			
+			now import the project in IDE and add the @EnableConfigServer annoation under @SpringBootApplication annotation
+			
+			
+			now create a git repo to store the configuration (i.e properties  files of other application)
+			added the application wise properties files like
+				application-one.properties
+				application-two.properties
+				
+			N.P : Store the data in main branch (because config-server will fetch the data from main branch by default)
+				 the files should be in root folder for default profile
+				 if we want to add prod profile the create a prod folder inside root folder and then  add the prop properties file  there and fetch them by http://localhost:8888/application-one/prod
+				
+				
+			now go to the config-server spring boot project and add the following configuration in the application.properties file
+			
+			
+			server.port=8888
+			
+			spring.cloud.config.server.git.uri= <github link of the configuration repo>
+			spring.cloud.config.server.git.clone-on-start=true
+			
+			
+			N.P : If the github repo is private then we need to provide the username and password
+			
+			spring.cloud.config.server.git.username=
+			spring.cloud.config.server.git.password=
+			
+			
+			now open postman to test === > http://localhost:8888/application-one/default
+			
+			
+			
+			
+		---------	now to consume the properties from config server to the microservices ---------
+			
+			
+			now add the following dependencies
+				
+					- spring-cloud-config-client
+				
+			
+			
+			
+			
+			now add some configuration in application.properties file
+			
+				spring.config.import=configserver:http://localhost:8888
+
+				spring.cloud.config.enabled= true
+			
+			
+			
+			
+			6. Refresh Configuration of Microservice
+			
+			
+				for this we need to use @RefreshScope
+				
+				basically we change a property value in product-server.properties and w/o rebuild the product-service we can get the updated changes in product-service application by calling a end point of spring boot actuator point - 
+				/actuator/refresh
+				
+				
+				now we need to do the following steps
+					
+					- add spring-boot-starter-actuator dependency
+					- add configuration property in application.properties 
+						management.endpoints.web.exposure.include=*
+					- now we need to create a controller annoatated with @RefreshScope
+					
+					while testing get the port number from the console if port is set to random uuid
+			
+					
+				
