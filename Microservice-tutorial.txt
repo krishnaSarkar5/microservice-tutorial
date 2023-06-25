@@ -125,10 +125,11 @@ Microservice Tutorial
 			
 			6. Refresh Configuration of Microservice
 			
+				add spring-boot-starter-actuator dependency
 			
-				for this we need to use @RefreshScope
+				for this we need to use @RefreshScope in a controller file (Q. is added in one controller is enough?)
 				
-				basically we change a property value in product-server.properties and w/o rebuild the product-service we can get the updated changes in product-service application by calling a end point of spring boot actuator point - 
+				basically we change a property value in product-service.properties in configuration repo and w/o rebuild the product-service we can get the updated changes in product-service application by calling a end point of spring boot actuator point - 
 				/actuator/refresh
 				
 				
@@ -140,6 +141,67 @@ Microservice Tutorial
 					- now we need to create a controller annoatated with @RefreshScope
 					
 					while testing get the port number from the console if port is set to random uuid
-			
 					
+					
+					
+					
+			
+			7. Storing secrects in vault
+			
+				
+				
+				install vault in windows
+				
+					- go to https://developer.hashicorp.com/vault/downloads and download for windows AMD64
+					-  move the downloaded zip to a desired location and uzip it. you will find a  vault.exe file
+					- now open cmd at the location where the vault.exe file is present
+					- now add the path where the value.exe file present, in the enviroment properties of windows
+					- now open open cmd again at the location where the vault.exe file is present
+					- run the command   vault.exe server -dev  (it will run the vault in developer mode)
+					- now there will some intstruction shown after that
+					
+						- first copy the root token (i.e  hvs.aHuaEE9sQWkqDV8y0EtqGA4E ) (it is used to login later)
+					
+						- we need to open and another tab in cmd in the same location and run the following command
+						set VAULT_ADDR=http://127.0.0.1:8200
+						
+						- we can now run the command   vault.exe status   to check the vault runnig status
+						
+						- now open google chrome and go to localhost:8200 then a login page will apear now choose token option and paste the above root token
+						- vault is installed successfully :) .
+						
+						
+						
+					Now we can add the sensitive information in vault
+					
+					- instead of uploading the data one by one in vault , we can create a json to upload multiple key-value pair.
+					- create a json file in order microservice . like order-service.json 
+					- open cmd again where vault.exe file is present and run the following command	
+							vault kv put secret/order-service @<file location full path>/order-service.json
+							
+					#### N.P if you are facing any error . rerun the server and also make sure in the file path in any folder name should not consist space in the name.
+					
+					
+					
+					Now we need to fetch data from vault inside micro service
+					
+						- add the following dependency 
+						
+									<dependency>
+									  <groupId>org.springframework.cloud</groupId>
+									  <artifactId>spring-cloud-starter-vault-config</artifactId>
+									</dependency>
+									
+						- add the following configuration in application.properties file
+						
+								spring.config.import=configserver:http://localhost:8888 , vault://
+								spring.cloud.config.enabled= true
+								spring.cloud.vault.host=localhost
+								spring.cloud.vault.port=8200
+								spring.cloud.vault.scheme=http
+								spring.cloud.vault.authentication=TOKEN
+								spring.cloud.vault.token= hvs.d4SQjREDHEgGUwB0yDOif4s3
+								spring.cloud.vault.application-name=order-service
+					
+								now run the micro service
 				
